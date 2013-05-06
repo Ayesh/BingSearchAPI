@@ -38,4 +38,6 @@ class BingSearch {
       print '<pre>' . $this->build_url() . '</pre>';
     }
   }
+  
+  
 }
