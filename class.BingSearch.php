@@ -8,8 +8,10 @@ class BingSearch {
   protected $results = 50;
   public $fetchers = array('curl', 'file_get_contents');
   public $fetcher = 'file_get_contents';
+  protected $next_possible = TRUE;
+  public $count = 0;
   
-  function __construct($search, $start = 0, $results = 50, $appid = NULL) {
+  function __construct($search = '', $start = 0, $results = 50, $appid = NULL) {
     $this->query = $search;
     $this->skip = $start;
     $this->top = $results;
@@ -17,7 +19,20 @@ class BingSearch {
       $this->appid = $appid;
     }
   }
+  function set_query($search){
+    $this->query = $search;
+  }
   
+  function set_appid($appid) {
+    $this->appid = $appid;
+  }
+  function set_resultcount($results) {
+    $this->results = $results;
+  }
+  
+  function set_startpoint($start = 0) {
+    $this->skip = $start;
+  }
   function set_fetcher($method) {
     if (method_exists($this, $method) && in_array($method, $this->fetchers)) {
       $this->fetcher = $method;
@@ -58,15 +73,23 @@ class BingSearch {
     $this->skip += $this->top;
   }
   
+  function further() {
+    return $this->next_possible;
+  }
+  
   protected function fetch() {
     $url = $this->build_url();
     return $this->{$this->fetcher}($url, $this->appid);
   }
   
   function search() {
-    print '<pre>';
-      print_r(json_decode($this->fetch()));
-    print '</pre>';
+    $results = json_decode($this->fetch());
+    $this->next_possible = isset($results->d->__next);
+    if (!empty($results->d->results)) {
+      $this->count += count($results->d->results);
+      return $results->d->results;
+    }
+    return FALSE;
   }
   
   protected function file_get_contents($url, $appid) {
